@@ -43,6 +43,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * @author <a href="mailto:jieryn@gmail.com">Jesse Farinacci</a>
  * @since 1.0
  */
+@SuppressWarnings("rawtypes")
 public final class PersistentBuildQueueBuildWrapper extends BuildWrapper {
     /**
      * Plugin marker for BuildWrapper.
@@ -69,12 +70,18 @@ public final class PersistentBuildQueueBuildWrapper extends BuildWrapper {
     }
 
     @Override
-    public BuildWrapper.Environment setUp(
-	    @SuppressWarnings("rawtypes") final AbstractBuild build,
+    public BuildWrapper.Environment setUp(final AbstractBuild build,
 	    final Launcher launcher, final BuildListener listener)
 	    throws IOException, InterruptedException {
+	PersistentBuildQueue.setUp(build);
 	return new Environment() {
-	    /* empty implementation */
+	    @Override
+	    public boolean tearDown(final AbstractBuild build,
+		    final BuildListener listener) throws IOException,
+		    InterruptedException {
+		PersistentBuildQueue.tearDown(build);
+		return super.tearDown(build, listener);
+	    }
 	};
     }
 }
