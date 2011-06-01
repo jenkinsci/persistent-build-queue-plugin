@@ -29,11 +29,15 @@ import hudson.model.Hudson;
 import hudson.model.Project;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -82,13 +86,33 @@ public final class PersistentBuildQueue {
 		PersistentBuildQueue.class.getCanonicalName() + ".txt");
     }
 
+    private static SortedSet<String> getPersistentBuildQueueEntries() {
+	final TreeSet<String> set = new TreeSet<String>();
+
+	InputStream inputStream = null;
+	try {
+	    inputStream = new FileInputStream(getPersistentBuildQueueFile());
+	    set.addAll(IOUtils.readLines(inputStream));
+	} catch (final IOException e) {
+	    LOG.log(Level.WARNING, e.getMessage(), e);
+	} finally {
+	    IOUtils.closeQuietly(inputStream);
+	}
+
+	return set;
+    }
+
     public static void load() {
 	if (!isLoaded) {
+	    final SortedSet<String> persistedBuildQueue = getPersistentBuildQueueEntries();
 	    for (final Project project : Hudson.getInstance().getProjects()) {
-		LOG.info("Re-scheduling persisted build queue project: "
-			+ project.getDisplayName());
-		project.asProject().scheduleBuild(0,
-			new PersistentBuildQueueCause());
+		final String projectDisplayName = project.getDisplayName();
+		if (persistedBuildQueue.contains(projectDisplayName)) {
+		    LOG.info("Re-scheduling persisted build queue project: "
+			    + project.getDisplayName());
+		    project.asProject().scheduleBuild(0,
+			    new PersistentBuildQueueCause());
+		}
 	    }
 
 	    isLoaded = true;
