@@ -27,6 +27,9 @@ package org.jenkins.ci.plugins;
 import hudson.model.Cause;
 
 /**
+ * A very simple {@link Cause} which describes that the job was scheduled
+ * because of the PBQ plugin.
+ * 
  * @author <a href="mailto:jieryn@gmail.com">Jesse Farinacci</a>
  * @since 1.0
  */

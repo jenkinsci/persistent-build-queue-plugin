@@ -28,6 +28,11 @@ import hudson.Extension;
 import hudson.model.PeriodicWork;
 
 /**
+ * A very simple {@link PeriodicWork} which requests
+ * {@link PersistentBuildQueue} to schedule persisted jobs. It is up to
+ * {@link PersistentBuildQueue} not to do this more than once per Jenkins
+ * restart.
+ * 
  * @author <a href="mailto:jieryn@gmail.com">Jesse Farinacci</a>
  * @since 1.0
  */
