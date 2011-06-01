@@ -33,7 +33,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -85,8 +84,7 @@ public final class PersistentBuildQueue {
 
     public static void load() {
 	if (!isLoaded) {
-	    final List<Project> projects = Hudson.getInstance().getProjects();
-	    for (final Project project : projects) {
+	    for (final Project project : Hudson.getInstance().getProjects()) {
 		LOG.info("Re-scheduling persisted build queue project: "
 			+ project.getDisplayName());
 		project.asProject().scheduleBuild(0,
@@ -99,11 +97,9 @@ public final class PersistentBuildQueue {
 
     private static String queueToString() {
 	final StringBuffer buffer = new StringBuffer();
-
 	for (final AbstractProject project : QUEUE) {
 	    buffer.append(project.getDisplayName()).append("\n");
 	}
-
 	return buffer.toString();
     }
 
