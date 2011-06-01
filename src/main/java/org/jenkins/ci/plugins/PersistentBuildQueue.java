@@ -28,10 +28,17 @@ import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.Project;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.apache.commons.io.IOUtils;
 
 /**
  * A queue of {@link AbstractBuild} that is to be persisted across the Jenkins
@@ -42,6 +49,11 @@ import java.util.logging.Logger;
  */
 @SuppressWarnings("rawtypes")
 public final class PersistentBuildQueue {
+    /**
+     * Keep track of whether we've already loaded the PBQ.
+     */
+    private static boolean isLoaded = false;
+
     /**
      * Synchronization.
      */
@@ -59,16 +71,16 @@ public final class PersistentBuildQueue {
      */
     private static final Queue<AbstractProject> QUEUE = new LinkedList<AbstractProject>();
 
-    /**
-     * Keep track of whether we've already loaded the PBQ.
-     */
-    private static boolean isLoaded = false;
-
     public static void add(final AbstractProject project) {
 	synchronized (LOCK) {
 	    QUEUE.add(project);
 	    write();
 	}
+    }
+
+    private static File getPersistentBuildQueueFile() {
+	return new File(Hudson.getInstance().getRootDir(),
+		PersistentBuildQueue.class.getCanonicalName() + ".txt");
     }
 
     public static void load() {
@@ -85,6 +97,16 @@ public final class PersistentBuildQueue {
 	}
     }
 
+    private static String queueToString() {
+	final StringBuffer buffer = new StringBuffer();
+
+	for (final AbstractProject project : QUEUE) {
+	    buffer.append(project.getDisplayName()).append("\n");
+	}
+
+	return buffer.toString();
+    }
+
     public static void remove(final AbstractProject project) {
 	synchronized (LOCK) {
 	    QUEUE.remove(project);
@@ -93,7 +115,19 @@ public final class PersistentBuildQueue {
     }
 
     private static void write() {
-	System.out.println("QUEUE: " + QUEUE.toString());
+	write(queueToString());
+    }
+
+    private static void write(final String contents) {
+	OutputStream outputStream = null;
+	try {
+	    outputStream = new FileOutputStream(getPersistentBuildQueueFile());
+	    IOUtils.write(contents, outputStream);
+	} catch (final IOException e) {
+	    LOG.log(Level.WARNING, e.getMessage(), e);
+	} finally {
+	    IOUtils.closeQuietly(outputStream);
+	}
     }
 
     /** Static-only access. */
