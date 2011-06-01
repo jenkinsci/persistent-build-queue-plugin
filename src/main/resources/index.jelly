@@ -25,9 +25,7 @@
 <div>
   <span>
     The
-    <a href="http://wiki.hudson-ci.org/display/HUDSON/Persistent+Build+Queue+Plugin">
-      Persistent Build Queue Plugin</a>
-    preserves the build queue across
-    Jenkins restart.
+    <a href="http://wiki.hudson-ci.org/display/HUDSON/Persistent+Build+Queue+Plugin">Persistent Build Queue Plugin</a>
+    preserves the build queue across Jenkins restart.
   </span>
 </div>
