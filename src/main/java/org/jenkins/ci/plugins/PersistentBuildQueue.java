@@ -24,10 +24,15 @@
 
 package org.jenkins.ci.plugins;
 
-import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.Cause.LegacyCodeCause;
+import hudson.model.Hudson;
+import hudson.model.Project;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
+import java.util.logging.Logger;
 
 /**
  * A queue of {@link AbstractBuild} that is to be persisted across the Jenkins
@@ -38,19 +43,51 @@ import java.util.Queue;
  */
 @SuppressWarnings("rawtypes")
 public final class PersistentBuildQueue {
+    /**
+     * Synchronization.
+     */
     private static final Object LOCK = new Object();
-    private static final Queue<AbstractBuild> QUEUE = new LinkedList<AbstractBuild>();
 
-    public static void setUp(final AbstractBuild build) {
+    /**
+     * The class logger.
+     */
+    private static final Logger LOG = Logger
+	    .getLogger(PersistentBuildQueue.class.getName());
+
+    /**
+     * The {@link Queue} of {@link AbstractProject} which are in the build
+     * queue.
+     */
+    private static final Queue<AbstractProject> QUEUE = new LinkedList<AbstractProject>();
+
+    /**
+     * Keep track of whether we've already loaded the PBQ.
+     */
+    private static boolean isLoaded = false;
+
+    public static void add(final AbstractProject project) {
 	synchronized (LOCK) {
-	    QUEUE.add(build);
+	    QUEUE.add(project);
 	    write();
 	}
     }
 
-    public static void tearDown(final AbstractBuild build) {
+    public static void load() {
+	if (!isLoaded) {
+	    final List<Project> projects = Hudson.getInstance().getProjects();
+	    for (final Project project : projects) {
+		LOG.info("Re-scheduling persisted build queue project: "
+			+ project.getDisplayName());
+		project.asProject().scheduleBuild(0, new LegacyCodeCause());
+	    }
+
+	    isLoaded = true;
+	}
+    }
+
+    public static void remove(final AbstractProject project) {
 	synchronized (LOCK) {
-	    QUEUE.remove(build);
+	    QUEUE.remove(project);
 	    write();
 	}
     }

@@ -73,13 +73,13 @@ public final class PersistentBuildQueueBuildWrapper extends BuildWrapper {
     public BuildWrapper.Environment setUp(final AbstractBuild build,
 	    final Launcher launcher, final BuildListener listener)
 	    throws IOException, InterruptedException {
-	PersistentBuildQueue.setUp(build);
+	PersistentBuildQueue.add(build.getProject());
 	return new Environment() {
 	    @Override
 	    public boolean tearDown(final AbstractBuild build,
 		    final BuildListener listener) throws IOException,
 		    InterruptedException {
-		PersistentBuildQueue.tearDown(build);
+		PersistentBuildQueue.remove(build.getProject());
 		return super.tearDown(build, listener);
 	    }
 	};
