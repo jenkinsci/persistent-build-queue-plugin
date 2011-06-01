@@ -52,7 +52,7 @@ public final class PersistentBuildQueueBuildWrapper extends BuildWrapper {
     public static class DescriptorImpl extends BuildWrapperDescriptor {
 	@Override
 	public String getDisplayName() {
-	    return Messages.PersistentBuildQueueBuildWrapper_DisplayName();
+	    return Messages.PersistentBuildQueue_DisplayName();
 	}
 
 	@Override

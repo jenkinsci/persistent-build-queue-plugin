@@ -25,7 +25,6 @@
 package org.jenkins.ci.plugins;
 
 import hudson.model.AbstractProject;
-import hudson.model.Cause.LegacyCodeCause;
 import hudson.model.Hudson;
 import hudson.model.Project;
 
@@ -78,7 +77,8 @@ public final class PersistentBuildQueue {
 	    for (final Project project : projects) {
 		LOG.info("Re-scheduling persisted build queue project: "
 			+ project.getDisplayName());
-		project.asProject().scheduleBuild(0, new LegacyCodeCause());
+		project.asProject().scheduleBuild(0,
+			new PersistentBuildQueueCause());
 	    }
 
 	    isLoaded = true;
