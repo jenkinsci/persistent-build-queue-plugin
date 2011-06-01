@@ -74,6 +74,12 @@ public final class PersistentBuildQueue {
      */
     private static final Queue<AbstractProject> QUEUE = new LinkedList<AbstractProject>();
 
+    /**
+     * Add a {@link AbstractProject} to the {@link #QUEUE}.
+     * 
+     * @param project
+     *            the project to add
+     */
     public static void add(final AbstractProject project) {
 	synchronized (LOCK) {
 	    QUEUE.add(project);
@@ -81,11 +87,22 @@ public final class PersistentBuildQueue {
 	}
     }
 
+    /**
+     * Get the {@link File} where the {@link PersistentBuildQueue} is stored.
+     * 
+     * @return the file where the PBQ is stored
+     */
     private static File getPersistentBuildQueueFile() {
 	return new File(Hudson.getInstance().getRootDir(),
 		PersistentBuildQueue.class.getCanonicalName() + ".txt");
     }
 
+    /**
+     * Get all the entries in the persistent build queue, sorted.
+     * 
+     * @return the sorted entries
+     */
+    @SuppressWarnings("unchecked")
     private static SortedSet<String> getPersistentBuildQueueEntries() {
 	final TreeSet<String> set = new TreeSet<String>();
 
@@ -102,23 +119,35 @@ public final class PersistentBuildQueue {
 	return set;
     }
 
+    /**
+     * Called at Jenkins start (and probably more times, hence the isLoaded
+     * check) to load up the persisted build queue and
+     * {@link AbstractProject#scheduleBuild(int, hudson.model.Cause)} for all
+     * entries in the set.
+     */
     public static void load() {
-	if (!isLoaded) {
-	    final SortedSet<String> persistedBuildQueue = getPersistentBuildQueueEntries();
-	    for (final Project project : Hudson.getInstance().getProjects()) {
-		final String projectDisplayName = project.getDisplayName();
-		if (persistedBuildQueue.contains(projectDisplayName)) {
-		    LOG.info("Re-scheduling persisted build queue project: "
-			    + project.getDisplayName());
-		    project.asProject().scheduleBuild(0,
-			    new PersistentBuildQueueCause());
+	synchronized (LOCK) {
+	    if (!isLoaded) {
+		final SortedSet<String> persistedBuildQueue = getPersistentBuildQueueEntries();
+		for (final Project project : Hudson.getInstance().getProjects()) {
+		    if (persistedBuildQueue.contains(project.getDisplayName())) {
+			LOG.info("Re-scheduling persisted build queue project: "
+				+ project.getDisplayName());
+			project.scheduleBuild(0,
+				new PersistentBuildQueueCause());
+		    }
 		}
-	    }
 
-	    isLoaded = true;
+		isLoaded = true;
+	    }
 	}
     }
 
+    /**
+     * Convert the {@link #QUEUE} into a {@link String} suitable for persisting.
+     * 
+     * @return the stringified queue
+     */
     private static String queueToString() {
 	final StringBuffer buffer = new StringBuffer();
 	for (final AbstractProject project : QUEUE) {
@@ -127,6 +156,12 @@ public final class PersistentBuildQueue {
 	return buffer.toString();
     }
 
+    /**
+     * Remove a {@link AbstractProject} to the {@link #QUEUE}.
+     * 
+     * @param project
+     *            the project to remove
+     */
     public static void remove(final AbstractProject project) {
 	synchronized (LOCK) {
 	    QUEUE.remove(project);
@@ -134,10 +169,19 @@ public final class PersistentBuildQueue {
 	}
     }
 
+    /**
+     * Write the {@link #QUEUE} to disk.
+     */
     private static void write() {
 	write(queueToString());
     }
 
+    /**
+     * Write the {@link #QUEUE}, as a {@link String}, to disk.
+     * 
+     * @param contents
+     *            the stringified build queue
+     */
     private static void write(final String contents) {
 	OutputStream outputStream = null;
 	try {
@@ -150,7 +194,9 @@ public final class PersistentBuildQueue {
 	}
     }
 
-    /** Static-only access. */
+    /**
+     * Static-only access.
+     */
     private PersistentBuildQueue() {
 	// static-only access
     }
